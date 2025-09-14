@@ -1,0 +1,52 @@
+name: Android 9 Emulator WebRTC
+
+on: workflow_dispatch
+
+jobs:
+  android9:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y wget unzip curl \
+            libvirt-clients libvirt-daemon-system \
+            bridge-utils virt-manager qemu-kvm \
+            lib32z1 lib32ncurses6 libbz2-1.0:i386 \
+            xvfb pulseaudio socat
+
+      - name: Download Emulator Container Scripts
+        run: |
+          git clone https://github.com/google/android-emulator-container-scripts.git
+
+      - name: Create Android 9 Container (WebRTC mode)
+        run: |
+          cd android-emulator-container-scripts
+          ./create_web_container.sh \
+            --system-image "system-images;android-28;google_apis;x86_64" \
+            --tag google_apis \
+            --api 28 \
+            --arch x86_64 \
+            --emulator-params "-gpu swiftshader_indirect -noaudio -no-snapshot"
+
+      - name: Start Emulator (WebRTC)
+        run: |
+          cd android-emulator-container-scripts
+          ./run.sh --emulator web &
+
+      - name: Install Cloudflare Tunnel
+        run: |
+          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          chmod +x cloudflared
+
+      - name: Expose Emulator via Cloudflare Tunnel
+        run: |
+          ./cloudflared tunnel --url http://localhost:6080 --no-autoupdate > cf.log 2>&1 &
+          sleep 10
+          cat cf.log
