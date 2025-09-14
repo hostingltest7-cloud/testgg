@@ -1,11 +1,11 @@
-name: Android 9 Emulator WebRTC (6h Live)
+name: Android 9 Emulator WebRTC
 
 on: workflow_dispatch
 
 jobs:
   android9:
     runs-on: ubuntu-latest
-    timeout-minutes: 360   # tối đa GitHub cho phép = 6 giờ
+    timeout-minutes: 360
 
     steps:
       - name: Checkout
@@ -25,15 +25,15 @@ jobs:
         run: |
           git clone https://github.com/google/android-emulator-container-scripts.git
 
-      - name: Create Android 9 Container (WebRTC mode)
+      - name: Build Android 9 Image
         run: |
           cd android-emulator-container-scripts
-          ./create_web_container.sh \
-            --system-image "system-images;android-28;google_apis;x86_64" \
-            --tag google_apis \
-            --api 28 \
-            --arch x86_64 \
-            --emulator-params "-gpu swiftshader_indirect -noaudio -no-snapshot"
+          ./emu-docker create --api 28 --tag google_apis --arch x86_64
+
+      - name: Create WebRTC Container
+        run: |
+          cd android-emulator-container-scripts
+          ./create_web_container.sh -s
 
       - name: Start Emulator (WebRTC)
         run: |
@@ -52,7 +52,7 @@ jobs:
           echo "========== Emulator WebRTC Public URL =========="
           grep -oE "https://[a-zA-Z0-9.-]+\.trycloudflare\.com" cf.log
 
-      - name: Keep Session Alive (6h)
+      - name: Keep Session Alive
         run: |
-          echo "Emulator is running... keeping session alive for 6h"
-          sleep 21600   # 6 giờ = 21600 giây
+          echo "Emulator running... keeping alive for 6h"
+          sleep 21600
