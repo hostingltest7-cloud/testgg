@@ -1,11 +1,11 @@
-name: Android 9 Emulator WebRTC
+name: Android 9 Emulator WebRTC (6h Live)
 
 on: workflow_dispatch
 
 jobs:
   android9:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360   # tối đa GitHub cho phép = 6 giờ
 
     steps:
       - name: Checkout
@@ -48,5 +48,11 @@ jobs:
       - name: Expose Emulator via Cloudflare Tunnel
         run: |
           ./cloudflared tunnel --url http://localhost:6080 --no-autoupdate > cf.log 2>&1 &
-          sleep 10
-          cat cf.log
+          sleep 15
+          echo "========== Emulator WebRTC Public URL =========="
+          grep -oE "https://[a-zA-Z0-9.-]+\.trycloudflare\.com" cf.log
+
+      - name: Keep Session Alive (6h)
+        run: |
+          echo "Emulator is running... keeping session alive for 6h"
+          sleep 21600   # 6 giờ = 21600 giây
